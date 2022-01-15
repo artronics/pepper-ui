@@ -1,8 +1,7 @@
 module Component.Toolbar exposing (..)
 
-import Css exposing (..)
-import Html.Styled exposing (Html, a, div, text, toUnstyled)
-import Html.Styled.Attributes exposing (css)
+import Html exposing (Html, div, text)
+import Html.Attributes exposing (class)
 
 
 type alias Model =
@@ -24,4 +23,4 @@ update model msg =
 
 view : Model -> Html Msg
 view model =
-    div [ css [ height (px 50), border3 (px 1) solid (hex "ff00e4") ] ] [ text "toolbar" ]
+    div [ class "toolbar" ] [ text "toolbar" ]

@@ -2,29 +2,20 @@ module Main exposing (Msg(..), main, update, view)
 
 import Browser
 import Component.Toolbar as Toolbar
-import Css exposing (..)
-import Css.Global exposing (children, typeSelector)
-import FontAwesome.Icon as Icon exposing (Icon)
-import FontAwesome.Solid as Icon
-import Html
-import Html.Attributes exposing (classList)
+import Html exposing (Html, a, div, li, map, p, text, ul)
+import Html.Attributes exposing (class, classList, id)
 import Html.Events exposing (onClick)
-import Html.Styled exposing (Html, a, div, fromUnstyled, li, map, p, text, toUnstyled, ul)
-import Html.Styled.Attributes as Attr exposing (css)
+import Icon
+import Menu exposing (consoleMenu)
 
 
 main =
-    Browser.sandbox { init = { panes = [], toolbar = Toolbar.new }, update = update, view = view >> toUnstyled }
+    Browser.element { init = init, update = update, view = view, subscriptions = subscriptions }
 
 
-
-{-
-   main =
-       Html.div []
-           [ Icon.viewIcon Icon.arrowAltCircleRight
-           , Html.text " Go!"
-           ]
--}
+init : () -> ( Model, Cmd Msg )
+init _ =
+    ( { toolbar = Toolbar.new, contextMenu = Nothing }, Cmd.none )
 
 
 type DockType
@@ -45,32 +36,25 @@ type alias Pane =
 
 
 type alias Model =
-    { panes : List Pane
+    { contextMenu : Maybe Menu.Menu
     , toolbar : Toolbar.Model
     }
 
 
 type Msg
-    = FloatPane
-    | Direction DockDirection
-    | Reset
+    = ShowContextMenu Menu.Menu ( Int, Int )
     | ToolbarMsg Toolbar.Msg
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd msg )
 update msg model =
     case msg of
-        FloatPane ->
-            { panes = [], toolbar = Toolbar.new }
-
-        Direction _ ->
-            { panes = [], toolbar = Toolbar.new }
-
-        Reset ->
-            { panes = [], toolbar = Toolbar.new }
+        ShowContextMenu menu ( x, y ) ->
+            Debug.log "here"
+                ( { model | contextMenu = Just menu }, Cmd.none )
 
         ToolbarMsg msg_ ->
-            { panes = [], toolbar = Toolbar.update model.toolbar msg_ }
+            ( { model | toolbar = Toolbar.update model.toolbar msg_ }, Cmd.none )
 
 
 
@@ -80,62 +64,43 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div
-        [ css
-            [ backgroundColor (hex "ff34")
-            , height (vh 100)
-            , width (vw 100)
-            , displayFlex
-            , flexDirection column
-            ]
-        ]
-        [ menuItem2 "context menu"
+        [ id "container" ]
+        [ case model.contextMenu of
+            Just menu ->
+                Menu.view menu
+
+            Nothing ->
+                div [] []
+        , menuItem2 "context menu"
         , map ToolbarMsg <| Toolbar.view 2
-        , div [ css [ flexGrow (num 1), displayFlex ] ]
-            [ div [ css [ flexGrow (num 1), border3 (px 1) solid (hex "ff00e4") ] ] [ text "left" ]
-            , div [ css [ flexGrow (num 1), border3 (px 1) solid (hex "ff00e4") ] ] [ text "main" ]
-            , div [ css [ flexGrow (num 1), border3 (px 1) solid (hex "ff00e4") ] ] [ text "right" ]
+
+        --, Menu.view consoleMenu
+        , div [ class "pane-container" ]
+            [ div [] [ text "left" ]
+            , div [] [ text "main" ]
+            , div [] [ text "right" ]
             ]
-        , div [ css [ flexGrow (num 1), border3 (px 1) solid (hex "ff00e4") ] ] [ text "terminal" ]
-        , div [ css [ height (px 50), border3 (px 1) solid (hex "ff00e4") ] ] [ text "status bar" ]
-        ]
-
-
-icon iconName =
-    fromUnstyled <| Icon.viewIcon iconName
-
-
-f =
-    typeSelector "div"
-        [ children
-            [ typeSelector "p"
-                [ fontSize (px 14)
-                ]
-            ]
+        , div [ onClick <| ShowContextMenu consoleMenu ( 1, 2 ) ] [ text "terminal" ]
+        , div [] [ text "status bar" ]
         ]
 
 
 menuItem : String -> Html Msg
 menuItem name =
-    div []
-        [ p [ css [ display inlineBlock ] ] [ icon Icon.star, text " Context menu" ]
-        , p [ css [ display inlineBlock ] ] [ text "foo" ]
+    li []
+        [ p [] [ Icon.view Icon.Star, text " Context menu" ]
+        , p [] [ text "foo" ]
         ]
 
 
 menuItem2 : String -> Html Msg
 menuItem2 name =
-    div
-        [ css
-            [ position absolute
-            , backgroundColor (hex "64ff73")
-            , top (px 200)
-            ]
-        ]
-        [ ul
-            [ css
-                [ padding (px 5)
-                , margin (px 0)
-                ]
-            ]
+    div [ class "menu-container" ]
+        [ ul []
             [ menuItem name, menuItem name ]
         ]
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.none

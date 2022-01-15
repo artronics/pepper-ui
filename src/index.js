@@ -1,6 +1,6 @@
 import '@fortawesome/fontawesome-free/css/svg-with-js.min.css'
 import 'bootstrap/dist/css/bootstrap-reboot.min.css'
-import './global.css'
+import './global.scss'
 import { Elm } from './Main.elm'
 
 console.log(`${__dirname}/../build`)
