@@ -4,13 +4,14 @@ import Debug exposing (toString)
 import Html exposing (Attribute, Html, div, li, text, ul)
 import Html.Attributes exposing (class, style)
 import List exposing (map)
-import Models exposing (Pos)
+import Models exposing (Pos, Rect)
 import Utils
 
 
 type alias Model =
     { menu : Menu
     , pos : Pos
+    , windowSize : Rect
     }
 
 
@@ -29,6 +30,11 @@ type MenuItem
 
 type alias Menu =
     List MenuItem
+
+
+type Anchor
+    = TopLeft
+    | TopRight
 
 
 viewMenu : Menu -> Html msg
@@ -54,7 +60,7 @@ viewSubmenuItem data =
 
 
 view : Model -> Html msg
-view { pos, menu } =
+view { windowSize, pos, menu } =
     div (containerAttr pos) [ viewMenu menu ]
 
 

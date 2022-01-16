@@ -1,15 +1,15 @@
 module Main exposing (Msg(..), main, update, view)
 
 import Browser
+import Browser.Dom exposing (getViewport)
 import Browser.Events as Events
 import Component.Toolbar as Toolbar
 import Html exposing (Html, a, div, li, map, p, text, ul)
 import Html.Attributes exposing (class, classList, id)
 import Html.Events exposing (on, onClick, onMouseDown)
-import Icon
 import Json.Decode as Decode
 import Menu exposing (consoleMenu)
-import Models exposing (Pos)
+import Models exposing (Pos, Rect)
 import Utils exposing (htmlNone)
 
 
@@ -17,19 +17,30 @@ main =
     Browser.element { init = init, update = update, view = view, subscriptions = subscriptions }
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( { toolbar = Toolbar.new, contextMenu = Nothing }, Cmd.none )
+init : Flags -> ( Model, Cmd Msg )
+init flags =
+    ( { windowSize = flags.windowSize
+      , toolbar = Toolbar.new
+      , contextMenu = Nothing
+      }
+    , Cmd.none
+    )
+
+
+type alias Flags =
+    { windowSize : Rect }
 
 
 type alias Model =
-    { contextMenu : Maybe Menu.Model
+    { windowSize : Rect
+    , contextMenu : Maybe Menu.Model
     , toolbar : Toolbar.Model
     }
 
 
 type Msg
-    = ShowContextMenu Menu.Menu Pos
+    = WindowResized Rect
+    | ShowContextMenu Menu.Menu Pos
     | HideMenu
     | ToolbarMsg Toolbar.Msg
 
@@ -37,8 +48,11 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd msg )
 update msg model =
     case msg of
+        WindowResized rect ->
+            ( { model | windowSize = rect }, Cmd.none )
+
         ShowContextMenu menu pos ->
-            ( { model | contextMenu = Just { menu = menu, pos = pos } }, Cmd.none )
+            ( { model | contextMenu = Just { menu = menu, pos = pos, windowSize = model.windowSize } }, Cmd.none )
 
         HideMenu ->
             ( { model | contextMenu = Nothing }, Cmd.none )
@@ -80,4 +94,4 @@ view model =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Sub.none
+    Events.onResize (\w h -> WindowResized { width = w, height = h })
