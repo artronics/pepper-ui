@@ -1,8 +1,8 @@
-module Menu exposing (Menu, Model, consoleMenu, view)
+module Menu exposing (Menu, Model, consoleMenu, repositionMenu, view)
 
 import Debug exposing (toString)
 import Html exposing (Attribute, Html, div, li, text, ul)
-import Html.Attributes exposing (class, style)
+import Html.Attributes exposing (class, id, style)
 import List exposing (map)
 import Models exposing (Pos, Rect)
 import Utils
@@ -11,7 +11,6 @@ import Utils
 type alias Model =
     { menu : Menu
     , pos : Pos
-    , windowSize : Rect
     }
 
 
@@ -30,11 +29,6 @@ type MenuItem
 
 type alias Menu =
     List MenuItem
-
-
-type Anchor
-    = TopLeft
-    | TopRight
 
 
 viewMenu : Menu -> Html msg
@@ -60,13 +54,18 @@ viewSubmenuItem data =
 
 
 view : Model -> Html msg
-view { windowSize, pos, menu } =
+view { pos, menu } =
     div (containerAttr pos) [ viewMenu menu ]
+
+
+repositionMenu : Rect -> Rect -> Model -> Model
+repositionMenu windowSize menuSize model =
+    model
 
 
 containerAttr : Pos -> List (Attribute msg)
 containerAttr pos =
-    [ class "menu-container", style "top" (Utils.px pos.y), style "left" (Utils.px pos.x) ]
+    [ class "menu-container", id "menu", style "top" (Utils.px pos.y), style "left" (Utils.px pos.x) ]
 
 
 consoleMenu : Menu

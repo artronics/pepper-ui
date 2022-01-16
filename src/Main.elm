@@ -1,16 +1,17 @@
 module Main exposing (Msg(..), main, update, view)
 
 import Browser
-import Browser.Dom exposing (getViewport)
+import Browser.Dom exposing (Error, Viewport, getViewportOf)
 import Browser.Events as Events
 import Component.Toolbar as Toolbar
 import Html exposing (Html, a, div, li, map, p, text, ul)
 import Html.Attributes exposing (class, classList, id)
 import Html.Events exposing (on, onClick, onMouseDown)
 import Json.Decode as Decode
-import Menu exposing (consoleMenu)
+import Menu exposing (consoleMenu, repositionMenu)
 import Models exposing (Pos, Rect)
-import Utils exposing (htmlNone)
+import Task exposing (Task)
+import Utils exposing (htmlNone, rectOfViewport)
 
 
 main =
@@ -40,19 +41,38 @@ type alias Model =
 
 type Msg
     = WindowResized Rect
-    | ShowContextMenu Menu.Menu Pos
+    | RenderMenu Menu.Menu Pos
     | HideMenu
+    | RepositionMenu (Result Error Viewport)
     | ToolbarMsg Toolbar.Msg
 
 
-update : Msg -> Model -> ( Model, Cmd msg )
-update msg model =
+getMenuSize : Cmd Msg
+getMenuSize =
+    getViewportOf "menu"
+        |> Task.attempt RepositionMenu
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg ({ contextMenu } as model) =
     case msg of
         WindowResized rect ->
             ( { model | windowSize = rect }, Cmd.none )
 
-        ShowContextMenu menu pos ->
-            ( { model | contextMenu = Just { menu = menu, pos = pos, windowSize = model.windowSize } }, Cmd.none )
+        RenderMenu menu pos ->
+            ( { model | contextMenu = Just { menu = menu, pos = pos } }, getMenuSize )
+
+        RepositionMenu (Result.Ok viewport) ->
+            ( { model
+                | contextMenu =
+                    contextMenu
+                        |> Maybe.map (repositionMenu model.windowSize <| rectOfViewport viewport)
+              }
+            , Cmd.none
+            )
+
+        RepositionMenu (Result.Err _) ->
+            ( model, Cmd.none )
 
         HideMenu ->
             ( { model | contextMenu = Nothing }, Cmd.none )
@@ -85,7 +105,7 @@ view model =
         , div [ class "pane-container" ]
             [ div [] [ text "left" ]
             , div [] [ text "main" ]
-            , div [ on "contextmenu" (Decode.map (ShowContextMenu consoleMenu) posDecoder) ] [ text "right" ]
+            , div [ on "contextmenu" (Decode.map (RenderMenu consoleMenu) posDecoder) ] [ text "right" ]
             ]
         , div [] [ text "terminal" ]
         , div [] [ text "status bar" ]
@@ -94,4 +114,4 @@ view model =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Events.onResize (\w h -> WindowResized { width = w, height = h })
+    Events.onResize (\w h -> WindowResized { width = toFloat w, height = toFloat h })
