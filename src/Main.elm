@@ -71,9 +71,9 @@ view model =
         , div [ class "pane-container" ]
             [ div [] [ text "left" ]
             , div [] [ text "main" ]
-            , div [] [ text "right" ]
+            , div [ on "contextmenu" (Decode.map (ShowContextMenu consoleMenu) posDecoder) ] [ text "right" ]
             ]
-        , div [ on "click" (Decode.map (ShowContextMenu consoleMenu) posDecoder) ] [ text "terminal" ]
+        , div [] [ text "terminal" ]
         , div [] [ text "status bar" ]
         ]
 
