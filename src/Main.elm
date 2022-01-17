@@ -4,14 +4,14 @@ import Browser
 import Browser.Dom exposing (Error, Viewport, getViewportOf)
 import Browser.Events as Events
 import Component.Toolbar as Toolbar
-import Html exposing (Html, a, div, li, map, p, text, ul)
-import Html.Attributes exposing (class, classList, id)
+import Html exposing (Html, div, map, text)
+import Html.Attributes exposing (class, id)
 import Html.Events exposing (on, onClick, onMouseDown)
 import Json.Decode as Decode
 import Menu exposing (consoleMenu, repositionMenu)
-import Models exposing (Pos, Rect)
+import Models exposing (ActionData, Pos, Rect)
 import Task exposing (Task)
-import Utils exposing (htmlNone, rectOfViewport)
+import Utils exposing (htmlNone, pageXYDecoder, rectOfViewport)
 
 
 main =
@@ -41,6 +41,7 @@ type alias Model =
 
 type Msg
     = WindowResized Rect
+    | Action ActionData
     | RenderMenu Menu.Menu Pos
     | HideMenu
     | RepositionMenu (Result Error Viewport)
@@ -74,6 +75,9 @@ update msg ({ contextMenu } as model) =
         RepositionMenu (Result.Err _) ->
             ( model, Cmd.none )
 
+        Action name ->
+            ( model, Cmd.none )
+
         HideMenu ->
             ( { model | contextMenu = Nothing }, Cmd.none )
 
@@ -81,16 +85,11 @@ update msg ({ contextMenu } as model) =
             ( { model | toolbar = Toolbar.update model.toolbar msg_ }, Cmd.none )
 
 
-posDecoder : Decode.Decoder Pos
-posDecoder =
-    Decode.map2 Pos (Decode.field "pageX" Decode.int) (Decode.field "pageY" Decode.int)
-
-
 viewContextMenu : Maybe Menu.Model -> Html Msg
 viewContextMenu menuModel =
     case menuModel of
         Just menu ->
-            Menu.view menu
+            Menu.view (\actionData -> Action actionData) menu
 
         Nothing ->
             htmlNone
@@ -99,16 +98,18 @@ viewContextMenu menuModel =
 view : Model -> Html Msg
 view model =
     div
-        [ id "container", onMouseDown HideMenu ]
-        [ viewContextMenu model.contextMenu
-        , map ToolbarMsg <| Toolbar.view 2
-        , div [ class "pane-container" ]
-            [ div [] [ text "left" ]
-            , div [] [ text "main" ]
-            , div [ on "contextmenu" (Decode.map (RenderMenu consoleMenu) posDecoder) ] [ text "right" ]
+        []
+        [ div [ onClick HideMenu ] [ viewContextMenu model.contextMenu ]
+        , div [ id "container", onMouseDown HideMenu ]
+            [ map ToolbarMsg <| Toolbar.view 2
+            , div [ class "pane-container" ]
+                [ div [] [ text "left" ]
+                , div [] [ text "main" ]
+                , div [ on "contextmenu" (Decode.map (RenderMenu consoleMenu) pageXYDecoder) ] [ text "right" ]
+                ]
+            , div [] [ text "terminal" ]
+            , div [] [ text "status bar" ]
             ]
-        , div [] [ text "terminal" ]
-        , div [] [ text "status bar" ]
         ]
 
 

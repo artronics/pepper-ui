@@ -2,7 +2,9 @@ module Utils exposing (..)
 
 import Browser.Dom exposing (Viewport)
 import Html exposing (Html, text)
-import Models exposing (Rect)
+import Html.Events
+import Json.Decode as Decode
+import Models exposing (Pos, Rect)
 
 
 px : Int -> String
@@ -18,3 +20,13 @@ htmlNone =
 rectOfViewport : Viewport -> Rect
 rectOfViewport vp =
     { width = vp.viewport.width, height = vp.viewport.height }
+
+
+onClickNoBubble : msg -> Html.Attribute msg
+onClickNoBubble message =
+    Html.Events.custom "click" (Decode.succeed { message = message, stopPropagation = True, preventDefault = True })
+
+
+pageXYDecoder : Decode.Decoder Pos
+pageXYDecoder =
+    Decode.map2 Pos (Decode.field "pageX" Decode.int) (Decode.field "pageY" Decode.int)

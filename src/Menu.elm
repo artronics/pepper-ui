@@ -1,10 +1,10 @@
 module Menu exposing (Menu, Model, consoleMenu, repositionMenu, view)
 
-import Debug exposing (toString)
 import Html exposing (Attribute, Html, div, li, text, ul)
 import Html.Attributes exposing (class, id, style)
-import List exposing (map)
-import Models exposing (Pos, Rect)
+import Html.Events exposing (onClick)
+import List
+import Models exposing (ActionData, Pos, Rect)
 import Utils
 
 
@@ -16,35 +16,34 @@ type alias Model =
 
 type alias MenuItemData =
     { name : String
+    , action : ActionData
 
     --, icon : Maybe String
     --, keymap : Maybe String
     }
 
 
-type MenuItem
-    = Item MenuItemData
-    | SubMenu MenuItemData (List MenuItemData)
+type Item
+    = Node MenuItemData
+    | ParentNode MenuItemData (List Item)
 
 
 type alias Menu =
-    List MenuItem
+    List Item
 
 
-viewMenu : Menu -> Html msg
-viewMenu menu =
+viewMenu action menu =
     menu
-        |> List.map viewMenuItem
+        |> List.map (viewMenuItem action)
         |> ul []
 
 
-viewMenuItem : MenuItem -> Html msg
-viewMenuItem item =
+viewMenuItem action item =
     case item of
-        Item data ->
-            li [] [ text data.name ]
+        Node data ->
+            li [ onClick <| action data.action ] [ text data.name ]
 
-        SubMenu data _ ->
+        ParentNode data _ ->
             li [] [ text (data.name ++ " >") ]
 
 
@@ -53,9 +52,9 @@ viewSubmenuItem data =
     text "sub"
 
 
-view : Model -> Html msg
-view { pos, menu } =
-    div (containerAttr pos) [ viewMenu menu ]
+view : (ActionData -> msg) -> Model -> Html msg
+view action { pos, menu } =
+    div (containerAttr pos) [ viewMenu action menu ]
 
 
 repositionMenu : Rect -> Rect -> Model -> Model
@@ -70,6 +69,6 @@ containerAttr pos =
 
 consoleMenu : Menu
 consoleMenu =
-    [ Item { name = "first" }
-    , SubMenu { name = "Second" } [ { name = "sub menu" } ]
+    [ Node { name = "first", action = { name = "firstAction" } }
+    , ParentNode { name = "Second", action = { name = "ParentAction" } } [ Node { name = "sub menu", action = { name = "subAction" } } ]
     ]
