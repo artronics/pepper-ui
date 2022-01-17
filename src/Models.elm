@@ -12,6 +12,6 @@ type alias Pos =
 
 
 type alias Rect =
-    { width : Float
-    , height : Float
+    { w : Float
+    , h : Float
     }
