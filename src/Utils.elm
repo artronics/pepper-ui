@@ -19,7 +19,7 @@ htmlNone =
 
 rectOfViewport : Viewport -> Rect
 rectOfViewport vp =
-    { width = vp.viewport.width, height = vp.viewport.height }
+    { w = vp.viewport.width, h = vp.viewport.height }
 
 
 onClickNoBubble : msg -> Html.Attribute msg

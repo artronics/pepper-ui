@@ -6,9 +6,9 @@ import Browser.Events as Events
 import Component.Toolbar as Toolbar
 import Html exposing (Html, div, map, text)
 import Html.Attributes exposing (class, id)
-import Html.Events exposing (on, onClick, onMouseDown)
+import Html.Events exposing (on, onClick, onMouseDown, onMouseUp)
 import Json.Decode as Decode
-import Menu exposing (consoleMenu, repositionMenu)
+import Menu exposing (consoleMenu, positionMenu)
 import Models exposing (ActionData, Pos, Rect)
 import Task exposing (Task)
 import Utils exposing (htmlNone, pageXYDecoder, rectOfViewport)
@@ -44,14 +44,14 @@ type Msg
     | Action ActionData
     | RenderMenu Menu.Menu Pos
     | HideMenu
-    | RepositionMenu (Result Error Viewport)
+    | PositionMenu (Result Error Viewport)
     | ToolbarMsg Toolbar.Msg
 
 
 getMenuSize : Cmd Msg
 getMenuSize =
-    getViewportOf "menu"
-        |> Task.attempt RepositionMenu
+    getViewportOf "active-menu"
+        |> Task.attempt PositionMenu
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -61,22 +61,23 @@ update msg ({ contextMenu } as model) =
             ( { model | windowSize = rect }, Cmd.none )
 
         RenderMenu menu pos ->
-            ( { model | contextMenu = Just { menu = menu, pos = pos } }, getMenuSize )
+            ( { model | contextMenu = Just { menu = menu, pos = pos, positioned = False } }, getMenuSize )
 
-        RepositionMenu (Result.Ok viewport) ->
+        PositionMenu (Result.Ok viewport) ->
             ( { model
                 | contextMenu =
                     contextMenu
-                        |> Maybe.map (repositionMenu model.windowSize <| rectOfViewport viewport)
+                        |> Maybe.map (positionMenu model.windowSize <| rectOfViewport viewport)
               }
             , Cmd.none
             )
 
-        RepositionMenu (Result.Err _) ->
+        PositionMenu (Result.Err _) ->
             ( model, Cmd.none )
 
         Action name ->
-            ( model, Cmd.none )
+            -- TODO: Add different Actions so we close menu only if relevant
+            ( { model | contextMenu = Nothing }, Cmd.none )
 
         HideMenu ->
             ( { model | contextMenu = Nothing }, Cmd.none )
@@ -98,7 +99,7 @@ viewContextMenu menuModel =
 view : Model -> Html Msg
 view model =
     div
-        []
+        [ id "root" ]
         [ div [ onClick HideMenu ] [ viewContextMenu model.contextMenu ]
         , div [ id "container", onMouseDown HideMenu ]
             [ map ToolbarMsg <| Toolbar.view 2
@@ -108,11 +109,11 @@ view model =
                 , div [ on "contextmenu" (Decode.map (RenderMenu consoleMenu) pageXYDecoder) ] [ text "right" ]
                 ]
             , div [] [ text "terminal" ]
-            , div [] [ text "status bar" ]
+            , div [ on "contextmenu" (Decode.map (RenderMenu consoleMenu) pageXYDecoder) ] [ text "status bar" ]
             ]
         ]
 
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Events.onResize (\w h -> WindowResized { width = toFloat w, height = toFloat h })
+    Events.onResize (\w h -> WindowResized { w = toFloat w, h = toFloat h })

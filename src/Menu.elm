@@ -1,8 +1,8 @@
-module Menu exposing (Menu, Model, consoleMenu, repositionMenu, view)
+module Menu exposing (Menu, Model, consoleMenu, positionMenu, view)
 
 import Html exposing (Attribute, Html, div, li, text, ul)
-import Html.Attributes exposing (class, id, style)
-import Html.Events exposing (onClick)
+import Html.Attributes exposing (class, classList, id, style)
+import Html.Events exposing (onClick, onMouseUp)
 import List
 import Models exposing (ActionData, Pos, Rect)
 import Utils
@@ -11,7 +11,13 @@ import Utils
 type alias Model =
     { menu : Menu
     , pos : Pos
+    , positioned : Bool
     }
+
+
+type Anchor
+    = Click Pos
+    | Actual Pos
 
 
 type alias MenuItemData =
@@ -41,10 +47,10 @@ viewMenu action menu =
 viewMenuItem action item =
     case item of
         Node data ->
-            li [ onClick <| action data.action ] [ text data.name ]
+            li [ onMouseUp <| action data.action ] [ text data.name ]
 
         ParentNode data _ ->
-            li [] [ text (data.name ++ " >") ]
+            li [] [ text (data.name ++ " sdfd sdfdf ") ]
 
 
 viewSubmenuItem : MenuItemData -> Html msg
@@ -53,18 +59,43 @@ viewSubmenuItem data =
 
 
 view : (ActionData -> msg) -> Model -> Html msg
-view action { pos, menu } =
-    div (containerAttr pos) [ viewMenu action menu ]
+view action { pos, menu, positioned } =
+    let
+        containerAttr =
+            [ id "active-menu"
+            , classList [ ( "hidden", not positioned ) ]
+            , class "menu-container"
+            , style "top" (Utils.px pos.y)
+            , style "left" (Utils.px pos.x)
+            ]
+    in
+    div containerAttr [ viewMenu action menu ]
 
 
-repositionMenu : Rect -> Rect -> Model -> Model
-repositionMenu windowSize menuSize model =
-    model
+positionMenu : Rect -> Rect -> Model -> Model
+positionMenu windowSize menuSize model =
+    let
+        { x, y } =
+            model.pos
 
+        { w, h } =
+            menuSize
 
-containerAttr : Pos -> List (Attribute msg)
-containerAttr pos =
-    [ class "menu-container", id "menu", style "top" (Utils.px pos.y), style "left" (Utils.px pos.x) ]
+        newX =
+            if toFloat x + w > windowSize.w then
+                ceiling <| windowSize.w - w
+
+            else
+                x
+
+        newY =
+            if toFloat y + h > windowSize.h then
+                ceiling <| windowSize.h - h
+
+            else
+                y
+    in
+    { model | pos = { x = newX, y = newY }, positioned = True }
 
 
 consoleMenu : Menu

@@ -4,8 +4,8 @@ import { Elm } from './Main.elm'
 
 const flags = {
   windowSize: {
-    width: window.innerWidth,
-    height: window.innerHeight
+    w: window.innerWidth,
+    h: window.innerHeight
   }
 }
 
