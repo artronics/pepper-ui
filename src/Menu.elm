@@ -2,10 +2,10 @@ module Menu exposing (Menu, Model, consoleMenu, positionMenu, view)
 
 import Html exposing (Attribute, Html, div, li, text, ul)
 import Html.Attributes exposing (class, classList, id, style)
-import Html.Events exposing (onClick, onMouseUp)
+import Html.Events exposing (onClick, onMouseEnter, onMouseUp)
 import List
 import Models exposing (ActionData, Pos, Rect)
-import Utils
+import Utils exposing (mapMaybeBool)
 
 
 type alias Model =
@@ -38,9 +38,46 @@ type alias Menu =
     List Item
 
 
+type alias MenuView =
+    { items : List Item
+    , current : Maybe Int
+    }
+
+
+viewMenuView : (ActionData -> msg) -> MenuView -> Html msg
+viewMenuView action { items, current } =
+    items
+        |> List.indexedMap (\i item -> viewMenuItemIndexed action item (mapMaybeBool current i))
+        |> ul []
+
+
+viewMenuItemIndexed action item isActive =
+    let
+        viewLi data isPrent =
+            li
+                [ onMouseUp <| action data.action
+
+                --, onMouseEnter <| action
+                , classList [ ( "active", isActive ) ]
+                ]
+                (if isPrent then
+                    [ text data.name ]
+
+                 else
+                    [ text <| data.name ++ "sdfd sdfd" ]
+                )
+    in
+    case item of
+        Node data ->
+            viewLi data False
+
+        ParentNode data _ ->
+            viewLi data True
+
+
 viewMenu action menu =
     menu
-        |> List.map (viewMenuItem action)
+        |> List.indexedMap (\i item -> viewMenuItemIndexed action item (i == 1))
         |> ul []
 
 

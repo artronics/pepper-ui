@@ -43,14 +43,19 @@ body {
   background-color: #64ff73;
   border: darkgrey solid 1px;
 
+  .active {
+    background-color: darkcyan;
+  }
   ul {
     padding: 5px 0px;
     margin: 0;
 
     li {
+      /*
       &:hover {
         background-color: #eeeeee;
       }
+      */
       padding: 0px 5px;
       display: block;
       white-space: nowrap;

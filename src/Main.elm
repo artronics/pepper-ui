@@ -45,6 +45,7 @@ type Msg
     | RenderMenu Menu.Menu Pos
     | HideMenu
     | PositionMenu (Result Error Viewport)
+    | MenuItemHover Int
     | ToolbarMsg Toolbar.Msg
 
 
@@ -73,6 +74,9 @@ update msg ({ contextMenu } as model) =
             )
 
         PositionMenu (Result.Err _) ->
+            ( model, Cmd.none )
+
+        MenuItemHover index ->
             ( model, Cmd.none )
 
         Action name ->

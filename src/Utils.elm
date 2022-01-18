@@ -30,3 +30,8 @@ onClickNoBubble message =
 pageXYDecoder : Decode.Decoder Pos
 pageXYDecoder =
     Decode.map2 Pos (Decode.field "pageX" Decode.int) (Decode.field "pageY" Decode.int)
+
+
+mapMaybeBool : Maybe a -> a -> Bool
+mapMaybeBool ma b =
+    Maybe.withDefault False <| Maybe.map (\a -> a == b) ma
